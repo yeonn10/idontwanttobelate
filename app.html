@@ -18,19 +18,17 @@
   .label { color:var(--sub); font-size:13px; margin-bottom:4px; }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   input, button { font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink); }
-  input[type=number] { width:64px; }
-  button { cursor:pointer; background:transparent; color:var(--accent); }
+    button { cursor:pointer; background:transparent; color:var(--accent); }
 
   /* 현재 시각 */
   .clock { text-align:center; }
   .clockbig { font-size:40px; font-weight:700; letter-spacing:.5px; font-variant-numeric:tabular-nums; line-height:1.2; }
 
   /* 마감 시각 / 걷는 시간 */
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .walks { display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:12px; }
+  label.small { font-size:13px; color:var(--sub); white-space:nowrap; }
+  label.small input { width:48px; padding:4px 6px; font-size:14px; text-align:center; }
   .field input[type=time] { width:100%; font-size:22px; font-weight:700; }
-  .field .num { display:flex; align-items:center; gap:6px; }
-  .field .num input { width:100%; font-size:22px; font-weight:700; }
-  .field .num span { font-size:18px; font-weight:600; }
 
   /* 결과 */
   .result { text-align:left; }
@@ -66,17 +64,10 @@
       <div class="label">도착 마감시각 (학교 도착)</div>
       <input type="time" id="deadline">
     </div>
-    <div class="grid2" style="margin-top:12px">
-      <div class="field">
-        <div class="label">집→정류장 걷는 시간</div>
-        <div class="num"><input type="number" id="walk" min="0" value="8" inputmode="numeric"><span>분</span></div>
-      </div>
-      <div class="field">
-        <div class="label">정류장→학교 걷는 시간</div>
-        <div class="num"><input type="number" id="walk2" min="0" value="10" inputmode="numeric"><span>분</span></div>
-      </div>
+    <div class="walks">
+      <label class="small">집→정류장 걷는 시간 <input type="number" id="walk" min="0" value="8" inputmode="numeric"> 분</label>
+      <label class="small">정류장→학교 걷는 시간 <input type="number" id="walk2" min="0" value="10" inputmode="numeric"> 분</label>
     </div>
-    <div class="sub" id="autoHint" style="margin-top:10px">마감시각은 현재 시각 + 30분 이후의 가장 빠른 정각/30분으로 자동 설정돼요.</div>
   </section>
 
   <section class="card result" id="result">
@@ -203,7 +194,7 @@ function renderTable() {
 function renderAll() { renderTable(); renderResult(); }
 
 // ---------- 이벤트 ----------
-$('deadline').addEventListener('input', () => { auto = false; $('autoHint').hidden = true; renderResult(); });
+$('deadline').addEventListener('input', () => { auto = false; renderResult(); });
 $('walk2').oninput = () => { localStorage.setItem('walk2', $('walk2').value); renderResult(); };
 $('walk').oninput = () => { localStorage.setItem('walk', $('walk').value); renderAll(); };
 $('refresh').onclick = load;
