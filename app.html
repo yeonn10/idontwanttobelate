@@ -63,12 +63,14 @@
   button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
   table { width:100%; border-collapse:collapse; margin-top:14px; }
   th { text-align:left; font-weight:400; color:var(--muted); font-size:12px; letter-spacing:-0.12px; padding:4px 4px 8px; }
-  td { padding:12px 4px; border-top:1px solid var(--hairline); font-variant-numeric:tabular-nums; vertical-align:top; }
-  td.big { font-size:17px; font-weight:600; }
+  td { padding:14px 4px; border-top:1px solid var(--hairline); font-variant-numeric:tabular-nums; vertical-align:top; }
+  td.t { font-size:20px; font-weight:600; letter-spacing:-0.374px; }
+  td.t .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--primary); margin-left:6px; vertical-align:middle; position:relative; top:-1px; }
+  td.t .sub { font-size:12px; font-weight:400; letter-spacing:-0.12px; margin-top:2px; }
   .sub { color:var(--muted); font-size:13px; letter-spacing:-0.224px; line-height:1.4; }
-  .tag { font-size:11px; letter-spacing:0; padding:1px 7px; border-radius:9999px; border:1px solid var(--hairline); color:var(--muted); white-space:nowrap; }
-  .tag.rt { color:var(--primary); border-color:var(--primary); }
   tr.pick td { background:color-mix(in srgb, var(--primary) 8%, transparent); }
+  #ride { margin-top:10px; font-size:14px; letter-spacing:-0.224px; }
+  #ride b { color:var(--ink); font-weight:600; }
   #meta { margin-top:12px; font-size:12px; letter-spacing:-0.12px; color:var(--muted); }
   .err { color:#dc2626; font-size:14px; margin-top:8px; }
   .banner { background:var(--soft); border:1px solid var(--hairline); border-radius:11px; padding:10px 14px; font-size:13px; letter-spacing:-0.224px; margin-bottom:16px; }
@@ -112,8 +114,9 @@
         <div class="route">452번<span>반포역 → 중앙대학교</span></div>
         <button id="refresh">새로고침</button>
       </div>
+      <div class="sub" id="ride"></div>
       <table>
-        <thead><tr><th>반포역 도착</th><th>집 출발</th><th>중앙대 도착</th><th>소요</th></tr></thead>
+        <thead><tr><th>집 출발</th><th>반포역 도착</th><th>중앙대 도착</th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
       <div id="meta"></div>
@@ -246,12 +249,17 @@ function markPick() {
 
 function renderTable() {
   $('mock').hidden = !(data && data.mock);
-  const src = { official: '<span class="tag rt">공식예측</span>', position: '<span class="tag">위치기반</span>', estimated: '<span class="tag">배차추정</span>' };
   const rows = list(null).filter((b) => b.leaveAt > Date.now() - 60000);
-  $('rows').innerHTML = rows.map((b) => `<tr data-bus="${b.busAt}">
-    <td>${fmt(b.busAt)} ${src[b.source] || ''}<div class="sub">${b.stopsAway != null && b.where ? `${b.where} 방향 이동 중 · 반포역까지 ${b.stopsAway}정거장` : ''}</div></td>
-    <td class="big">${fmt(b.leaveAt)}</td><td>${fmt(b.arriveAt)}</td><td>${Math.round(b.rideMin)}분</td></tr>`).join('');
-  if (data) $('meta').textContent = `갱신 ${fmt(data.now)} · 배차간격 ${data.term || '?'}분` + (data.calibErrSec != null ? ` · 위치기반 예측 오차 평균 약 ${data.calibErrSec}초` : '') + ' · 파란 줄 = 마지노선 버스';
+  $('rows').innerHTML = rows.map((b) => {
+    const min = Math.max(0, Math.round((b.busAt - Date.now()) / 60000));
+    const info = b.source === 'estimated' ? `${min}분 뒤 · 추정` : `${min}분 뒤` + (b.stopsAway != null ? ` · ${b.stopsAway}정거장 전` : '');
+    return `<tr data-bus="${b.busAt}">
+      <td class="t">${fmt(b.leaveAt)}</td>
+      <td class="t">${fmt(b.busAt)}${b.source === 'official' ? '<span class="dot"></span>' : ''}<div class="sub">${info}</div></td>
+      <td class="t">${fmt(b.arriveAt)}</td></tr>`;
+  }).join('');
+  $('ride').innerHTML = rows.length ? `현재 교통상황 기준 반포역 → 중앙대 약 <b>${Math.round(rows[0].rideMin)}분</b>` : '';
+  if (data) $('meta').textContent = `갱신 ${fmt(data.now)} · ● 공식 예측`;
   markPick();
 }
 
@@ -273,7 +281,7 @@ $('walk').oninput = () => { localStorage.setItem('walk', $('walk').value); rende
 $('refresh').onclick = load;
 
 // 1초마다 시계/남은 시간 갱신, 60초마다 데이터 갱신(화면이 숨겨지면 멈춤 -> API 호출 절약)
-setInterval(() => { renderClock(); renderResult(); }, 1000);
+setInterval(() => { renderClock(); renderResult(); renderTable(); }, 1000);
 setInterval(() => { if (!document.hidden) load(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 $('deadline').value = fmt(getDeadline());
