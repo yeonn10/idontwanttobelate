@@ -33,15 +33,14 @@
   .card { background:var(--card); border:1px solid var(--hairline); border-radius:18px; padding:24px; }
 
   /* 마감 시각 / 걷는 시간 */
-  .card.setup { padding:36px 24px 32px; }
-  .field-label { font-size:14px; letter-spacing:-0.224px; color:var(--muted); margin-bottom:14px; }
+  .field-label { font-size:14px; letter-spacing:-0.224px; color:var(--muted); margin-bottom:8px; }
   input { font:inherit; color:var(--ink); background:var(--canvas); border:1px solid var(--hairline); border-radius:9999px; outline:none; -webkit-appearance:none; appearance:none; }
   input:focus { border-color:var(--focus); box-shadow:none; outline:2px solid var(--focus); outline-offset:1px; }
   /* 시간 칸: 글씨는 직접 그린 텍스트(정확히 가운데), 실제 시간 입력은 투명하게 위에 덮어서 탭하면 선택창이 열리게 함 */
   .timebox { position:relative; height:56px; display:flex; align-items:center; justify-content:center; background:var(--canvas); border:1px solid var(--hairline); border-radius:9999px; font-size:28px; font-weight:600; letter-spacing:-0.28px; font-variant-numeric:tabular-nums; line-height:1; }
   .timebox:focus-within { outline:2px solid var(--focus); outline-offset:1px; }
   .timebox input[type=time] { position:absolute; inset:0; width:100%; height:100%; opacity:0; border:0; background:transparent; font-size:16px; cursor:pointer; }
-  .walks { display:flex; flex-wrap:wrap; gap:12px 18px; margin-top:24px; }
+  .walks { display:flex; flex-wrap:wrap; gap:10px 18px; margin-top:18px; }
   .walks label { display:flex; align-items:center; gap:8px; font-size:14px; letter-spacing:-0.224px; color:var(--muted); white-space:nowrap; }
   .walks input { width:56px; height:34px; padding:0 8px; font-size:15px; text-align:center; letter-spacing:0; }
 
@@ -88,7 +87,7 @@
 
 <section class="parch">
   <div class="inner">
-    <div class="card setup">
+    <div class="card">
       <div class="field-label">도착 마감시각 (학교 도착)</div>
       <div class="timebox"><span id="deadlineText">--</span><input type="time" id="deadline"></div>
       <div class="walks">
