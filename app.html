@@ -34,6 +34,8 @@
   .result { text-align:left; }
   .result .head { color:var(--sub); font-size:14px; }
   .result .big { font-size:40px; font-weight:800; color:var(--accent); line-height:1.15; font-variant-numeric:tabular-nums; }
+  .result .flow { font-size:14px; margin-top:4px; }
+  .result .flow b { color:var(--ink); font-weight:700; }
   .result .big small { font-size:16px; font-weight:600; color:var(--ink); margin-left:6px; }
   .result.go .big { color:var(--ok); }
 
@@ -174,7 +176,7 @@ function renderResult() {
   box.innerHTML = `
     <div class="head">마지노선 집 출발</div>
     <div class="big">${fmtK(b.leaveAt)}<small>${go ? '지금 바로 출발!' : '(' + left + '분 뒤)'}</small></div>
-    <div class="sub">${fmt(b.busAt)} 반포역 탑승 → ${fmt(b.arriveAt)} 중앙대 정류장 도착 → ${fmt(b.arriveAt + walk2)} 학교 도착${b.source === 'estimated' ? ' · 배차간격 추정' : ''}</div>`;
+    <div class="sub flow"><b>${fmt(b.busAt)}</b> 탑승 → <b>${fmt(b.arriveAt)}</b> 정류장 도착 → <b>${fmt(b.arriveAt + walk2)}</b> 학교 도착${b.source === 'estimated' ? ' · 배차간격 추정' : ''}</div>`;
   markPick();
 }
 
