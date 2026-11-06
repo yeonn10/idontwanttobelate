@@ -25,13 +25,12 @@
   .clock { text-align:center; }
   .clockbig { font-size:40px; font-weight:700; letter-spacing:.5px; font-variant-numeric:tabular-nums; line-height:1.2; }
 
-  /* 마감 시각 / 여유 */
-  .grid2 { display:grid; grid-template-columns:1.6fr 1fr; gap:12px; }
+  /* 마감 시각 / 걷는 시간 */
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .field input[type=time] { width:100%; font-size:22px; font-weight:700; }
   .field .num { display:flex; align-items:center; gap:6px; }
   .field .num input { width:100%; font-size:22px; font-weight:700; }
   .field .num span { font-size:18px; font-weight:600; }
-  #autoBtn { margin-top:10px; font-size:13px; padding:4px 10px; }
 
   /* 결과 */
   .result { text-align:left; }
@@ -63,18 +62,21 @@
   </section>
 
   <section class="card">
-    <div class="grid2">
+    <div class="field">
+      <div class="label">도착 마감시각 (학교 도착)</div>
+      <input type="time" id="deadline">
+    </div>
+    <div class="grid2" style="margin-top:12px">
       <div class="field">
-        <div class="label">도착 마감시각</div>
-        <input type="time" id="deadline">
+        <div class="label">집→정류장 걷는 시간</div>
+        <div class="num"><input type="number" id="walk" min="0" value="8" inputmode="numeric"><span>분</span></div>
       </div>
       <div class="field">
-        <div class="label">여유</div>
-        <div class="num"><input type="number" id="buffer" min="0" value="10" inputmode="numeric"><span>분</span></div>
+        <div class="label">정류장→학교 걷는 시간</div>
+        <div class="num"><input type="number" id="walk2" min="0" value="10" inputmode="numeric"><span>분</span></div>
       </div>
     </div>
-    <button id="autoBtn" hidden>자동 설정으로 되돌리기</button>
-    <div class="sub" id="autoHint" style="margin-top:8px">마감시각은 현재 시각 + 30분 이후의 가장 빠른 정각/30분으로 자동 설정돼요.</div>
+    <div class="sub" id="autoHint" style="margin-top:10px">마감시각은 현재 시각 + 30분 이후의 가장 빠른 정각/30분으로 자동 설정돼요.</div>
   </section>
 
   <section class="card result" id="result">
@@ -86,9 +88,6 @@
     <div class="row" style="justify-content:space-between">
       <div><b>452번</b> <span class="sub">반포역 → 중앙대학교</span></div>
       <button id="refresh">새로고침</button>
-    </div>
-    <div class="row" style="margin:10px 0 4px">
-      <label class="sub">집→정류장 걷는 시간 <input type="number" id="walk" min="0" value="8" inputmode="numeric"> 분</label>
     </div>
     <table style="margin-top:6px">
       <thead><tr><th>반포역 도착</th><th>집 출발</th><th>중앙대 도착</th><th>소요</th></tr></thead>
@@ -109,7 +108,7 @@ let auto = true; // 마감시각 자동 설정 여부
 const pad = (n) => String(n).padStart(2, '0');
 const fmt = (ms) => { const d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
 $('walk').value = localStorage.getItem('walk') || 8;
-$('buffer').value = localStorage.getItem('buffer') || 10;
+$('walk2').value = localStorage.getItem('walk2') || 10;
 
 // ---------- 데이터 ----------
 async function load() {
@@ -154,14 +153,6 @@ function getDeadline() {
   return d.getTime();
 }
 
-function setAuto(on) {
-  auto = on;
-  $('autoBtn').hidden = on;
-  $('autoHint').hidden = !on;
-  if (on) $('deadline').value = fmt(autoDeadline());
-  renderResult();
-}
-
 // ---------- 렌더링 ----------
 function renderClock() {
   $('clock').textContent = new Date().toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
@@ -173,13 +164,13 @@ function renderResult() {
   if (!data) return;
   const dl = getDeadline();
   if (dl == null) { box.className = 'card result'; box.innerHTML = '<div class="head">도착 마감시각을 입력해 주세요.</div>'; return; }
-  const buf = +$('buffer').value || 0;
-  const target = dl - buf * 60000;
+  const walk2 = (+$('walk2').value || 0) * 60000; // 정류장->학교 걷는 시간
+  const target = dl - walk2; // 이 시각까지 중앙대 정류장에 도착해야 함
   const cands = list(target).filter((b) => b.arriveAt <= target && b.leaveAt > Date.now() - 60000);
   window.__pick = null;
   if (!cands.length) {
     box.className = 'card result';
-    box.innerHTML = '<div class="head">마지노선 집 출발</div><div class="big">-</div><div class="sub">이 시각까지 도착 가능한 버스가 없어요. 마감시각이나 여유를 조정해 보세요.</div>';
+    box.innerHTML = '<div class="head">마지노선 집 출발</div><div class="big">-</div><div class="sub">이 시각까지 도착 가능한 버스가 없어요. 마감시각이나 걷는 시간을 확인해 보세요.</div>';
     return;
   }
   const b = cands[cands.length - 1];
@@ -190,7 +181,7 @@ function renderResult() {
   box.innerHTML = `
     <div class="head">마지노선 집 출발</div>
     <div class="big">${fmt(b.leaveAt)}<small>${go ? '지금 바로 출발!' : '(' + left + '분 뒤)'}</small></div>
-    <div class="sub">${fmt(b.busAt)} 반포역 탑승 → ${fmt(b.arriveAt)} 중앙대 도착 예상${b.source === 'estimated' ? ' · 배차간격 추정' : ''}</div>`;
+    <div class="sub">${fmt(b.busAt)} 반포역 탑승 → ${fmt(b.arriveAt)} 중앙대 정류장 도착 → ${fmt(b.arriveAt + walk2)} 학교 도착${b.source === 'estimated' ? ' · 배차간격 추정' : ''}</div>`;
   markPick();
 }
 
@@ -212,9 +203,8 @@ function renderTable() {
 function renderAll() { renderTable(); renderResult(); }
 
 // ---------- 이벤트 ----------
-$('deadline').addEventListener('input', () => { auto = false; $('autoBtn').hidden = false; $('autoHint').hidden = true; renderResult(); });
-$('autoBtn').onclick = () => setAuto(true);
-$('buffer').oninput = () => { localStorage.setItem('buffer', $('buffer').value); renderResult(); };
+$('deadline').addEventListener('input', () => { auto = false; $('autoHint').hidden = true; renderResult(); });
+$('walk2').oninput = () => { localStorage.setItem('walk2', $('walk2').value); renderResult(); };
 $('walk').oninput = () => { localStorage.setItem('walk', $('walk').value); renderAll(); };
 $('refresh').onclick = load;
 
