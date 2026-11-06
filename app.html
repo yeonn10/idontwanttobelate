@@ -33,7 +33,7 @@
   /* 결과 */
   .result { text-align:left; }
   .result .head { color:var(--sub); font-size:14px; }
-  .result .big { font-size:34px; font-weight:800; color:var(--accent); line-height:1.15; font-variant-numeric:tabular-nums; }
+  .result .big { font-size:40px; font-weight:800; color:var(--accent); line-height:1.15; font-variant-numeric:tabular-nums; }
   .result .big small { font-size:16px; font-weight:600; color:var(--ink); margin-left:6px; }
   .result.go .big { color:var(--ok); }
 
@@ -98,8 +98,8 @@ let auto = true; // 마감시각 자동 설정 여부
 
 const pad = (n) => String(n).padStart(2, '0');
 const fmt = (ms) => { const d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
-// 12시간제 한글 표기: 오후 3시 51분
-const fmtK = (ms) => { const d = new Date(ms); const h = d.getHours(); return (h < 12 ? '오전 ' : '오후 ') + (h % 12 || 12) + '시 ' + d.getMinutes() + '분'; };
+// 12시간제 표기: 오후 3:51
+const fmtK = (ms) => { const d = new Date(ms); const h = d.getHours(); return (h < 12 ? '오전 ' : '오후 ') + (h % 12 || 12) + ':' + pad(d.getMinutes()); };
 $('walk').value = localStorage.getItem('walk') || 8;
 $('walk2').value = localStorage.getItem('walk2') || 10;
 
