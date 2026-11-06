@@ -215,7 +215,7 @@ function renderResult() {
   box.className = 'result' + (go ? ' go' : '');
   box.innerHTML = `
     <div class="head">마지노선 집 출발</div>
-    <div class="big">${fmtK(b.leaveAt)}<small>${go ? '지금 바로 출발!' : '(' + left + '분 뒤)'}</small></div>
+    <div class="big">${fmtK(b.leaveAt)}<small>${go ? '(지금 출발)' : '(' + left + '분 뒤)'}</small></div>
     <div class="sub flow"><b>${fmt(b.busAt)}</b> 탑승 → <b>${fmt(b.arriveAt)}</b> 정류장 도착 → <b>${fmt(b.arriveAt + walk2)}</b> 학교 도착${b.source === 'estimated' ? ' · 배차간격 추정' : ''}</div>`;
   markPick();
 }
