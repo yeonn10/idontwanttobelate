@@ -22,7 +22,9 @@ function parseItems(xml) {
   return items;
 }
 async function seoul(p, params) {
-  const url = `${BASE}${p}?serviceKey=${KEY}&${new URLSearchParams(params)}`;
+  // Decoding 키(특수문자 포함)도, 이미 인코딩된 키(%포함)도 모두 처리
+  const k = KEY.includes('%') ? KEY : encodeURIComponent(KEY);
+  const url = `${BASE}${p}?serviceKey=${k}&${new URLSearchParams(params)}`;
   const xml = await (await fetch(url)).text();
   const code = (xml.match(/<headerCd>(\d+)<\/headerCd>/) || [])[1];
   if (code && code !== '0') throw new Error(`서울시 API 오류(${code}): ${(xml.match(/<headerMsg>([\s\S]*?)<\/headerMsg>/) || [])[1]}`);
@@ -162,7 +164,16 @@ export default {
     try {
       const url = new URL(request.url);
       if (url.pathname !== '/api/arrivals') return new Response(JSON.stringify({ ok: true, hint: '/api/arrivals' }), { headers });
-      return new Response(JSON.stringify(await compute()), { headers });
+      // 호출 횟수 절약: 결과를 45초 동안 공유(여러 번 새로고침해도 API는 한 번만 호출)
+      const cache = typeof caches !== 'undefined' ? caches.default : null;
+      const ck = new Request('https://cache.local/arrivals-452');
+      if (cache && !MOCK) {
+        const hit = await cache.match(ck);
+        if (hit) return new Response(hit.body, { headers });
+      }
+      const body = JSON.stringify(await compute());
+      if (cache && !MOCK) await cache.put(ck, new Response(body, { headers: { 'Cache-Control': 'max-age=45' } }));
+      return new Response(body, { headers });
     } catch (e) {
       return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
     }
