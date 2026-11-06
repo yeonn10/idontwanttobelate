@@ -45,7 +45,7 @@
   .walks input { width:56px; height:34px; padding:0 8px; font-size:15px; text-align:center; letter-spacing:0; }
 
   /* 결과 (니어블랙 타일) */
-  .tile { background:var(--canvas); color:var(--ink); padding:32px 0 36px; }
+  .tile { background:var(--canvas); color:var(--ink); padding:0 0 36px; }
   .result .head { font-size:14px; letter-spacing:-0.224px; color:var(--muted); }
   .result .big { font-size:clamp(32px, 10vw, 40px); font-weight:600; line-height:1.1; letter-spacing:-0.28px; margin:6px 0 10px; font-variant-numeric:tabular-nums; }
   .result .big small { font-size:16px; font-weight:400; letter-spacing:-0.374px; color:var(--muted); margin-left:8px; white-space:nowrap; }
@@ -85,6 +85,12 @@
   </div>
 </header>
 
+<section class="tile">
+  <div class="inner">
+    <div class="result" id="result"><div class="head">불러오는 중…</div></div>
+  </div>
+</section>
+
 <section class="parch">
   <div class="inner">
     <div class="card">
@@ -95,12 +101,6 @@
         <label>정류장→학교 걷는 시간 <input type="number" id="walk2" min="0" value="10" inputmode="numeric"> 분</label>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="tile">
-  <div class="inner">
-    <div class="result" id="result"><div class="head">불러오는 중…</div></div>
   </div>
 </section>
 
