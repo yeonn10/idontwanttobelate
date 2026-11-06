@@ -128,7 +128,8 @@ const API_URL = 'https://bus452.jwiie10.workers.dev/api/arrivals';
 const $ = (id) => document.getElementById(id);
 const HALF = 30 * 60000;
 let data = null;
-let auto = true; // 마감시각 자동 설정 여부
+let saved = localStorage.getItem('deadline') || null; // 이 기기에 저장된 마감시각 'HH:MM'
+let editUntil = 0; // 시간을 고르는 중이면(마지막 입력 후 8초) 자동 변경을 잠시 멈춤
 
 const pad = (n) => String(n).padStart(2, '0');
 const fmt = (ms) => { const d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
@@ -167,17 +168,36 @@ function list(deadlineMs) {
 }
 
 // ---------- 마감 시각 ----------
-// 현재 시각 + 30분 이후의 가장 빠른 정각 또는 30분
-function autoDeadline() { return Math.ceil((Date.now() + HALF) / HALF) * HALF; }
-
-function getDeadline() {
-  if (auto) return autoDeadline();
-  const v = $('deadline').value;
-  if (!v) return null;
+// 저장된 'HH:MM'을 다가오는 해당 시각(이미 지났으면 내일)의 timestamp로 변환
+function tsFromHM(v) {
   const [h, m] = v.split(':').map(Number);
   const d = new Date(); d.setHours(h, m, 0, 0);
   if (d.getTime() < Date.now() - 60000) d.setDate(d.getDate() + 1);
   return d.getTime();
+}
+const walk2ms = () => (+$('walk2').value || 0) * 60000;
+
+// 이 마감시각에 맞춰 지금 출발 가능한 버스가 있는가
+function feasible(dl) {
+  if (!data) return true;
+  const target = dl - walk2ms();
+  return list(target).some((b) => b.arriveAt <= target && b.leaveAt > Date.now() - 60000);
+}
+
+// 정각/30분 중 지금 출발 가능한 버스가 있는 가장 빠른 시각
+function autoPick() {
+  const first = Math.ceil(Date.now() / HALF) * HALF;
+  for (let i = 0; i < 48; i++) { const t = first + i * HALF; if (feasible(t)) return t; }
+  return first;
+}
+
+// 실제로 쓸 마감시각: 저장값이 있고 버스가 있으면 저장값, 아니면 자동 선택
+function getDeadline() {
+  if (saved) {
+    const t = tsFromHM(saved);
+    if (Date.now() < editUntil || feasible(t)) return t;
+  }
+  return autoPick();
 }
 
 // ---------- 렌더링 ----------
@@ -191,7 +211,7 @@ function showDeadline() {
 
 function renderClock() {
   $('clock').textContent = new Date().toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
-  if (auto) { const v = fmt(autoDeadline()); if ($('deadline').value !== v) { $('deadline').value = v; showDeadline(); renderResult(); } }
+  if (Date.now() >= editUntil) { const v = fmt(getDeadline()); if ($('deadline').value !== v) { $('deadline').value = v; showDeadline(); renderResult(); } }
 }
 
 function renderResult() {
@@ -238,7 +258,16 @@ function renderTable() {
 function renderAll() { renderTable(); renderResult(); }
 
 // ---------- 이벤트 ----------
-$('deadline').addEventListener('input', () => { auto = false; showDeadline(); renderResult(); });
+// 직접 고른 마감시각은 이 기기에 저장 (새로고침해도 유지)
+const onDeadlineEdit = () => {
+  const v = $('deadline').value;
+  if (v) { saved = v; localStorage.setItem('deadline', v); }
+  editUntil = Date.now() + 8000;
+  showDeadline(); renderResult();
+};
+$('deadline').addEventListener('input', onDeadlineEdit);
+$('deadline').addEventListener('change', onDeadlineEdit);
+$('deadline').addEventListener('blur', () => { editUntil = 0; renderClock(); renderResult(); });
 $('walk2').oninput = () => { localStorage.setItem('walk2', $('walk2').value); renderResult(); };
 $('walk').oninput = () => { localStorage.setItem('walk', $('walk').value); renderAll(); };
 $('refresh').onclick = load;
@@ -247,7 +276,7 @@ $('refresh').onclick = load;
 setInterval(() => { renderClock(); renderResult(); }, 1000);
 setInterval(() => { if (!document.hidden) load(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
-$('deadline').value = fmt(autoDeadline());
+$('deadline').value = fmt(getDeadline());
 showDeadline();
 renderClock();
 load();
