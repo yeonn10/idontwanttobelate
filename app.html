@@ -2,94 +2,124 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>몇 시에 출발하지?</title>
 <style>
-  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --sub:#6b7480; --line:#e4e7eb; --accent:#2563eb; --ok:#16a34a; --warn:#d97706; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#0f1318; --card:#181d24; --ink:#eef1f5; --sub:#97a1ae; --line:#2a313a; --accent:#6ea0ff; --ok:#4ade80; --warn:#fbbf24; } }
+  /* 디자인 기준: Apple 스타일 — 흰색/파치먼트/니어블랙 타일 교차, 단일 액센트(Action Blue), 그림자·그라데이션 없음 */
+  :root {
+    --canvas:#ffffff; --parchment:#f5f5f7; --card:#ffffff;
+    --ink:#1d1d1f; --muted:#7a7a7a; --hairline:#e0e0e0; --soft:#f0f0f0;
+    --primary:#0066cc; --focus:#0071e3;
+    --tile:#272729; --on-tile:#ffffff; --tile-muted:#cccccc; --link-dark:#2997ff;
+    --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Pretendard", "Noto Sans KR", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --canvas:#000000; --parchment:#101012; --card:#1c1c1e; --ink:#f5f5f7; --muted:#a1a1a6; --hairline:#38383a; --soft:#2a2a2c; --primary:#2997ff; --focus:#2997ff; --tile:#272729; }
+  }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 -apple-system,"Pretendard","Noto Sans KR",sans-serif; }
-  main { max-width:560px; margin:0 auto; padding:16px; }
-  h1 { font-size:22px; margin:4px 0 14px; }
-  h2 { font-size:15px; margin:22px 4px 8px; color:var(--sub); font-weight:600; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; }
-  .sub { color:var(--sub); font-size:13px; }
-  .label { color:var(--sub); font-size:13px; margin-bottom:4px; }
-  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  input, button { font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink); }
-    button { cursor:pointer; background:transparent; color:var(--accent); }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; background:var(--canvas); color:var(--ink); font:400 17px/1.47 var(--font); letter-spacing:-0.374px; -webkit-font-smoothing:antialiased; }
+  .inner { max-width:560px; margin:0 auto; padding:0 20px; }
+  .num { font-variant-numeric:tabular-nums; }
 
-  /* 현재 시각 */
-  .clock { text-align:center; }
-  .clockbig { font-size:40px; font-weight:700; letter-spacing:.5px; font-variant-numeric:tabular-nums; line-height:1.2; }
+  /* 상단: 제목 + 현재 시각 (흰 캔버스) */
+  .hero { background:var(--canvas); padding:28px 0 32px; }
+  h1 { margin:0 0 20px; font-size:clamp(26px, 8vw, 34px); font-weight:600; line-height:1.15; letter-spacing:-0.374px; }
+  .caption { font-size:14px; line-height:1.43; letter-spacing:-0.224px; color:var(--muted); }
+  .clockbig { font-size:40px; font-weight:600; line-height:1.1; letter-spacing:-0.28px; font-variant-numeric:tabular-nums; margin-top:4px; }
+
+  /* 파치먼트 밴드 */
+  .parch { background:var(--parchment); padding:24px 0; }
+  .card { background:var(--card); border:1px solid var(--hairline); border-radius:18px; padding:24px; }
 
   /* 마감 시각 / 걷는 시간 */
-  .walks { display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:12px; }
-  label.small { font-size:13px; color:var(--sub); white-space:nowrap; }
-  label.small input { width:48px; padding:4px 6px; font-size:14px; text-align:center; }
-  .field input[type=time] { width:100%; font-size:22px; font-weight:700; }
+  .field-label { font-size:14px; letter-spacing:-0.224px; color:var(--muted); margin-bottom:8px; }
+  input { font:inherit; color:var(--ink); background:var(--canvas); border:1px solid var(--hairline); border-radius:9999px; outline:none; -webkit-appearance:none; appearance:none; }
+  input:focus { border-color:var(--focus); box-shadow:none; outline:2px solid var(--focus); outline-offset:1px; }
+  input[type=time] { display:block; width:100%; height:56px; padding:0 22px; font-size:28px; font-weight:600; letter-spacing:-0.28px; text-align:left; font-variant-numeric:tabular-nums; }
+  .walks { display:flex; flex-wrap:wrap; gap:10px 18px; margin-top:18px; }
+  .walks label { display:flex; align-items:center; gap:8px; font-size:14px; letter-spacing:-0.224px; color:var(--muted); white-space:nowrap; }
+  .walks input { width:56px; height:34px; padding:0 8px; font-size:15px; text-align:center; letter-spacing:0; }
 
-  /* 결과 */
-  .result { text-align:left; }
-  .result .head { color:var(--sub); font-size:14px; }
-  .result .big { font-size:40px; font-weight:800; color:var(--accent); line-height:1.15; font-variant-numeric:tabular-nums; }
-  .result .flow { font-size:14px; margin-top:4px; }
-  .result .flow b { color:var(--ink); font-weight:700; }
-  .result .big small { font-size:16px; font-weight:600; color:var(--ink); margin-left:6px; }
-  .result.go .big { color:var(--ok); }
+  /* 결과 (니어블랙 타일) */
+  .tile { background:var(--tile); color:var(--on-tile); padding:40px 0 36px; }
+  .result .head { font-size:14px; letter-spacing:-0.224px; color:var(--tile-muted); }
+  .result .big { font-size:clamp(44px, 14vw, 56px); font-weight:600; line-height:1.07; letter-spacing:-0.28px; margin:6px 0 10px; font-variant-numeric:tabular-nums; }
+  .result .big small { font-size:17px; font-weight:400; letter-spacing:-0.374px; color:var(--tile-muted); margin-left:10px; white-space:nowrap; }
+  .result.go .big small { color:var(--link-dark); font-weight:600; }
+  .result .sub { font-size:15px; line-height:1.47; letter-spacing:-0.224px; color:var(--tile-muted); }
+  .result .flow b { color:var(--on-tile); font-weight:600; }
 
-  /* 상세 */
-  table { width:100%; border-collapse:collapse; }
-  th { text-align:left; font-weight:500; color:var(--sub); font-size:12px; padding:4px; }
-  td { padding:9px 4px; border-top:1px solid var(--line); font-variant-numeric:tabular-nums; vertical-align:top; }
-  td.big { font-size:18px; font-weight:700; }
-  .tag { font-size:11px; padding:1px 6px; border-radius:999px; border:1px solid var(--line); color:var(--sub); white-space:nowrap; }
-  .tag.rt { color:var(--ok); border-color:var(--ok); }
-  tr.pick td { background:color-mix(in srgb,var(--accent) 10%,transparent); }
-  .err { color:#dc2626; font-size:14px; }
-  .banner { background:color-mix(in srgb,var(--warn) 15%,transparent); border:1px solid var(--warn); border-radius:10px; padding:8px 12px; font-size:13px; margin-bottom:12px; }
+  /* 상세 정보 */
+  h2 { margin:0 0 14px 2px; font-size:21px; font-weight:600; line-height:1.19; letter-spacing:0.231px; }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .route { font-size:17px; font-weight:600; letter-spacing:-0.374px; }
+  .route span { font-weight:400; font-size:14px; letter-spacing:-0.224px; color:var(--muted); margin-left:6px; }
+  button { font:inherit; font-size:14px; letter-spacing:-0.224px; cursor:pointer; padding:9px 18px; border-radius:9999px; background:transparent; color:var(--primary); border:1px solid var(--primary); transition:transform .1s; }
+  button:active { transform:scale(0.95); }
+  button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+  table { width:100%; border-collapse:collapse; margin-top:14px; }
+  th { text-align:left; font-weight:400; color:var(--muted); font-size:12px; letter-spacing:-0.12px; padding:4px 4px 8px; }
+  td { padding:12px 4px; border-top:1px solid var(--hairline); font-variant-numeric:tabular-nums; vertical-align:top; }
+  td.big { font-size:17px; font-weight:600; }
+  .sub { color:var(--muted); font-size:13px; letter-spacing:-0.224px; line-height:1.4; }
+  .tag { font-size:11px; letter-spacing:0; padding:1px 7px; border-radius:9999px; border:1px solid var(--hairline); color:var(--muted); white-space:nowrap; }
+  .tag.rt { color:var(--primary); border-color:var(--primary); }
+  tr.pick td { background:color-mix(in srgb, var(--primary) 8%, transparent); }
+  #meta { margin-top:12px; font-size:12px; letter-spacing:-0.12px; color:var(--muted); }
+  .err { color:#dc2626; font-size:14px; margin-top:8px; }
+  .banner { background:var(--soft); border:1px solid var(--hairline); border-radius:11px; padding:10px 14px; font-size:13px; letter-spacing:-0.224px; margin-bottom:16px; }
 </style>
 </head>
 <body>
-<main>
-  <h1>🚌 몇 시에 출발하지?</h1>
-  <div id="mock" class="banner" hidden>샘플 데이터예요. 실시간 데이터가 아니에요.</div>
 
-  <section class="card clock">
-    <div class="label">현재 시각</div>
+<header class="hero">
+  <div class="inner">
+    <h1>🚌 몇 시에 출발하지?</h1>
+    <div id="mock" class="banner" hidden>샘플 데이터예요. 실시간 데이터가 아니에요.</div>
+    <div class="caption">현재 시각</div>
     <div class="clockbig" id="clock">--:--:--</div>
-  </section>
+  </div>
+</header>
 
-  <section class="card">
-    <div class="field">
-      <div class="label">도착 마감시각 (학교 도착)</div>
+<section class="parch">
+  <div class="inner">
+    <div class="card">
+      <div class="field-label">도착 마감시각 (학교 도착)</div>
       <input type="time" id="deadline">
+      <div class="walks">
+        <label>집→정류장 걷는 시간 <input type="number" id="walk" min="0" value="8" inputmode="numeric"> 분</label>
+        <label>정류장→학교 걷는 시간 <input type="number" id="walk2" min="0" value="10" inputmode="numeric"> 분</label>
+      </div>
     </div>
-    <div class="walks">
-      <label class="small">집→정류장 걷는 시간 <input type="number" id="walk" min="0" value="8" inputmode="numeric"> 분</label>
-      <label class="small">정류장→학교 걷는 시간 <input type="number" id="walk2" min="0" value="10" inputmode="numeric"> 분</label>
-    </div>
-  </section>
+  </div>
+</section>
 
-  <section class="card result" id="result">
-    <div class="head">불러오는 중…</div>
-  </section>
+<section class="tile">
+  <div class="inner">
+    <div class="result" id="result"><div class="head">불러오는 중…</div></div>
+  </div>
+</section>
 
-  <h2>상세 정보</h2>
-  <section class="card">
-    <div class="row" style="justify-content:space-between">
-      <div><b>452번</b> <span class="sub">반포역 → 중앙대학교</span></div>
-      <button id="refresh">새로고침</button>
+<section class="parch" style="padding-bottom:40px">
+  <div class="inner">
+    <h2>상세 정보</h2>
+    <div class="card" style="padding:20px">
+      <div class="row">
+        <div class="route">452번<span>반포역 → 중앙대학교</span></div>
+        <button id="refresh">새로고침</button>
+      </div>
+      <table>
+        <thead><tr><th>반포역 도착</th><th>집 출발</th><th>중앙대 도착</th><th>소요</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div id="meta"></div>
+      <div class="err" id="err"></div>
     </div>
-    <table style="margin-top:6px">
-      <thead><tr><th>반포역 도착</th><th>집 출발</th><th>중앙대 도착</th><th>소요</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
-    <div class="sub" id="meta" style="margin-top:6px"></div>
-    <div class="err" id="err"></div>
-  </section>
-</main>
+  </div>
+</section>
+
 <script>
 // Cloudflare Worker 주소
 const API_URL = 'https://bus452.jwiie10.workers.dev/api/arrivals';
@@ -158,13 +188,13 @@ function renderResult() {
   const box = $('result');
   if (!data) return;
   const dl = getDeadline();
-  if (dl == null) { box.className = 'card result'; box.innerHTML = '<div class="head">도착 마감시각을 입력해 주세요.</div>'; return; }
+  if (dl == null) { box.className = 'result'; box.innerHTML = '<div class="head">도착 마감시각을 입력해 주세요.</div>'; return; }
   const walk2 = (+$('walk2').value || 0) * 60000; // 정류장->학교 걷는 시간
   const target = dl - walk2; // 이 시각까지 중앙대 정류장에 도착해야 함
   const cands = list(target).filter((b) => b.arriveAt <= target && b.leaveAt > Date.now() - 60000);
   window.__pick = null;
   if (!cands.length) {
-    box.className = 'card result';
+    box.className = 'result';
     box.innerHTML = '<div class="head">마지노선 집 출발</div><div class="big">-</div><div class="sub">이 시각까지 도착 가능한 버스가 없어요. 마감시각이나 걷는 시간을 확인해 보세요.</div>';
     return;
   }
@@ -172,7 +202,7 @@ function renderResult() {
   window.__pick = b.busAt;
   const left = Math.floor((b.leaveAt - Date.now()) / 60000);
   const go = left <= 0;
-  box.className = 'card result' + (go ? ' go' : '');
+  box.className = 'result' + (go ? ' go' : '');
   box.innerHTML = `
     <div class="head">마지노선 집 출발</div>
     <div class="big">${fmtK(b.leaveAt)}<small>${go ? '지금 바로 출발!' : '(' + left + '분 뒤)'}</small></div>
