@@ -6,13 +6,13 @@
 - 중앙대학교 도착 예상 시각과, 도착 마감 시각에 맞춘 마지노선 출발 시각도 보여줘요.
 
 ## 구조
-- `index.html` : 화면 (GitHub Pages로 호스팅)
+- `index.html` : 로더 (캐시 방지용, 거의 안 바뀜) / `app.html` : 실제 화면. `app.html`의 `API_URL`을 수정해요
 - `worker/worker.js` : API 중계 (Cloudflare Workers). 서울시 API 키는 여기 환경변수에만 둬요.
 
 ## 설정
 1. data.go.kr에서 "서울특별시 버스도착정보조회 서비스", "서울특별시 버스위치정보조회 서비스" 활용 신청 후 일반 인증키 발급
 2. Cloudflare Workers에 `worker/worker.js` 배포, Secret `BUS_API_KEY`에 인증키 입력
-3. `index.html` 위쪽의 `API_URL`을 내 Worker 주소로 변경
+3. `app.html` 위쪽의 `API_URL`을 내 Worker 주소로 변경
 4. GitHub 저장소 Settings → Pages → Branch `main` / root 로 켜기
 
 키가 없으면 Worker는 샘플 데이터로 동작해요.

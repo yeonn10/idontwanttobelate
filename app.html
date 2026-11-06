@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>452 출발 계산기</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --sub:#6b7480; --line:#e4e7eb; --accent:#2563eb; --ok:#16a34a; --warn:#d97706; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1318; --card:#181d24; --ink:#eef1f5; --sub:#97a1ae; --line:#2a313a; --accent:#6ea0ff; --ok:#4ade80; --warn:#fbbf24; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 -apple-system,"Pretendard","Noto Sans KR",sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:4px 0 12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; }
+  .sub { color:var(--sub); font-size:13px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  input, button { font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink); }
+  input[type=number] { width:64px; }
+  button { cursor:pointer; background:transparent; color:var(--accent); }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-weight:500; color:var(--sub); font-size:12px; padding:4px; }
+  td { padding:9px 4px; border-top:1px solid var(--line); font-variant-numeric:tabular-nums; vertical-align:top; }
+  td.big { font-size:18px; font-weight:700; }
+  .tag { font-size:11px; padding:1px 6px; border-radius:999px; border:1px solid var(--line); color:var(--sub); white-space:nowrap; }
+  .tag.rt { color:var(--ok); border-color:var(--ok); }
+  .best td { background:color-mix(in srgb,var(--accent) 10%,transparent); }
+  .res { font-size:15px; margin-top:10px; }
+  .res b { font-size:22px; color:var(--accent); }
+  .err { color:#dc2626; font-size:14px; }
+  .banner { background:color-mix(in srgb,var(--warn) 15%,transparent); border:1px solid var(--warn); border-radius:10px; padding:8px 12px; font-size:13px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🚌 452번 · 반포역 → 중앙대학교</h1>
+  <div id="mock" class="banner" hidden>샘플 데이터예요. API 키로 서버를 실행하면 실시간으로 바뀝니다.</div>
+
+  <section class="card">
+    <div class="row">
+      <label>걷는 시간 <input type="number" id="walk" min="0" value="8"> 분</label>
+      <button id="refresh">새로고침</button>
+    </div>
+    <table style="margin-top:8px">
+      <thead><tr><th>반포역 도착</th><th>집 출발</th><th>중앙대 도착</th><th>소요</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="sub" id="meta" style="margin-top:6px"></div>
+    <div class="err" id="err"></div>
+  </section>
+
+  <section class="card">
+    <b>도착 마감 시각 → 마지노선 출발</b>
+    <div class="row" style="margin-top:8px">
+      <input type="time" id="deadline">
+      <label class="sub">여유 <input type="number" id="buffer" min="0" value="0"> 분</label>
+    </div>
+    <div class="res" id="result">도착해야 하는 시각을 입력해 보세요.</div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+// Cloudflare Worker 주소로 바꾸세요 (README 참고)
+const API_URL = 'https://YOUR-WORKER.workers.dev/api/arrivals';
+let data = null;
+const fmt = (ms) => { const d = new Date(ms); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+$('walk').value = localStorage.getItem('walk') || 8;
+
+async function load() {
+  $('err').textContent = '';
+  if (API_URL.includes('YOUR-WORKER')) { $('err').textContent = 'app.html 위쪽의 API_URL을 내 Worker 주소로 바꿔야 해요.'; return; }
+  try {
+    const r = await fetch(API_URL, { cache: 'no-store' }); const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    data = j;
+  } catch (e) { $('err').textContent = e.message; }
+  render();
+}
+function list(deadlineMs) {
+  if (!data) return [];
+  const walk = (+$('walk').value || 0) * 60000;
+  const l = data.buses.map((b) => ({ ...b }));
+  // 마감이 목록보다 뒤면 배차간격으로 추가 버스 추정
+  if (deadlineMs && data.term > 0 && l.length) {
+    let g = 0;
+    while (g++ < 40) {
+      const last = l[l.length - 1];
+      if (last.busAt + last.rideMin * 60000 > deadlineMs) break;
+      l.push({ busAt: last.busAt + data.term * 60000, rideMin: last.rideMin, source: 'estimated', rideSource: 'segments' });
+    }
+  }
+  return l.map((b) => ({ ...b, leaveAt: b.busAt - walk, arriveAt: b.busAt + b.rideMin * 60000 }));
+}
+function render() {
+  $('mock').hidden = !(data && data.mock);
+  const src = { official: '<span class="tag rt">공식예측</span>', position: '<span class="tag">위치기반</span>', estimated: '<span class="tag">배차추정</span>' };
+  const rows = list(null).filter((b) => b.leaveAt > Date.now() - 60000);
+  $('rows').innerHTML = rows.map((b) => `<tr>
+    <td>${fmt(b.busAt)} ${src[b.source] || ''}<div class="sub">${b.stopsAway != null && b.where ? `${b.where} 방향 이동 중 · 반포역까지 ${b.stopsAway}정거장` : ''}</div></td>
+    <td class="big">${fmt(b.leaveAt)}</td><td>${fmt(b.arriveAt)}</td><td>${Math.round(b.rideMin)}분</td></tr>`).join('');
+  if (data) $('meta').textContent = `갱신 ${fmt(data.now)} · 배차간격 ${data.term || '?'}분` + (data.calibErrSec != null ? ` · 위치기반 예측 오차 평균 약 ${data.calibErrSec}초` : '');
+  deadline();
+}
+function deadline() {
+  const v = $('deadline').value, out = $('result');
+  if (!v || !data) { out.textContent = '도착해야 하는 시각을 입력해 보세요.'; return; }
+  const [h, m] = v.split(':').map(Number);
+  const d = new Date(); d.setHours(h, m, 0, 0);
+  if (d.getTime() < Date.now() - 60000) d.setDate(d.getDate() + 1);
+  const target = d.getTime() - (+$('buffer').value || 0) * 60000;
+  const ok = list(target).filter((b) => b.arriveAt <= target && b.leaveAt > Date.now() - 60000);
+  if (!ok.length) { out.textContent = '이 시각까지 도착 가능한 버스가 없어요.'; return; }
+  const b = ok[ok.length - 1];
+  out.innerHTML = `마지노선 집 출발 <b>${fmt(b.leaveAt)}</b> (${Math.max(0, Math.round((b.leaveAt - Date.now()) / 60000))}분 뒤)<br>
+    <span class="sub">${fmt(b.busAt)} 반포역 탑승 → ${fmt(b.arriveAt)} 중앙대 도착 예상${b.source === 'estimated' ? ' · 배차간격 추정' : ''}</span>`;
+}
+$('walk').oninput = () => { localStorage.setItem('walk', $('walk').value); render(); };
+$('deadline').oninput = deadline; $('buffer').oninput = deadline; $('refresh').onclick = load;
+setInterval(load, 30000); load();
+</script>
+</body>
+</html>
