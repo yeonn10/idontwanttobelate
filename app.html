@@ -243,9 +243,9 @@ function renderResult() {
 
 function renderTable() {
   $('mock').hidden = !(data && data.mock);
-  // 탈 수 없는 버스도 전부 표시. 마감시각까지의 추정 버스도 이어 붙여서 마지노선 버스가 항상 보이게 함
+  // 탈 수 없는 버스도 전부 표시. API가 알려준 버스만 보여줌(배차간격 추정 버스는 넣지 않음)
   const target = getDeadline() - walk2ms();
-  const rows = list(target);
+  const rows = list(null);
   $('rows').innerHTML = rows.map((b) => {
     const ok = b.leaveAt > Date.now() - 60000 && b.arriveAt <= target; // 탈 수 있고 + 안 늦음
     const min = Math.max(0, Math.round((b.busAt - Date.now()) / 60000));
