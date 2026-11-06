@@ -61,7 +61,7 @@
 <script>
 const $ = (id) => document.getElementById(id);
 // Cloudflare Worker 주소로 바꾸세요 (README 참고)
-const API_URL = 'https://YOUR-WORKER.workers.dev/api/arrivals';
+const API_URL = 'https://bus452.jwiie10.workers.dev/api/arrivals';
 let data = null;
 const fmt = (ms) => { const d = new Date(ms); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
 $('walk').value = localStorage.getItem('walk') || 8;
