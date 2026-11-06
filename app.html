@@ -33,11 +33,12 @@
   .card { background:var(--card); border:1px solid var(--hairline); border-radius:18px; padding:24px; }
 
   /* 마감 시각 / 걷는 시간 */
-  .field-label { font-size:14px; letter-spacing:-0.224px; color:var(--muted); margin-bottom:8px; }
+  .card.setup { padding:36px 24px 32px; }
+  .field-label { font-size:14px; letter-spacing:-0.224px; color:var(--muted); margin-bottom:14px; }
   input { font:inherit; color:var(--ink); background:var(--canvas); border:1px solid var(--hairline); border-radius:9999px; outline:none; -webkit-appearance:none; appearance:none; }
   input:focus { border-color:var(--focus); box-shadow:none; outline:2px solid var(--focus); outline-offset:1px; }
   input[type=time] { display:block; width:100%; height:56px; padding:0 22px; font-size:28px; font-weight:600; letter-spacing:-0.28px; text-align:left; font-variant-numeric:tabular-nums; }
-  .walks { display:flex; flex-wrap:wrap; gap:10px 18px; margin-top:18px; }
+  .walks { display:flex; flex-wrap:wrap; gap:12px 18px; margin-top:24px; }
   .walks label { display:flex; align-items:center; gap:8px; font-size:14px; letter-spacing:-0.224px; color:var(--muted); white-space:nowrap; }
   .walks input { width:56px; height:34px; padding:0 8px; font-size:15px; text-align:center; letter-spacing:0; }
 
@@ -84,7 +85,7 @@
 
 <section class="parch">
   <div class="inner">
-    <div class="card">
+    <div class="card setup">
       <div class="field-label">도착 마감시각 (학교 도착)</div>
       <input type="time" id="deadline">
       <div class="walks">
