@@ -37,7 +37,10 @@
   .field-label { font-size:14px; letter-spacing:-0.224px; color:var(--muted); margin-bottom:14px; }
   input { font:inherit; color:var(--ink); background:var(--canvas); border:1px solid var(--hairline); border-radius:9999px; outline:none; -webkit-appearance:none; appearance:none; }
   input:focus { border-color:var(--focus); box-shadow:none; outline:2px solid var(--focus); outline-offset:1px; }
-  input[type=time] { display:block; width:100%; height:56px; padding:0 22px; font-size:28px; font-weight:600; letter-spacing:-0.28px; text-align:left; font-variant-numeric:tabular-nums; }
+  /* 시간 칸: 글씨는 직접 그린 텍스트(정확히 가운데), 실제 시간 입력은 투명하게 위에 덮어서 탭하면 선택창이 열리게 함 */
+  .timebox { position:relative; height:56px; display:flex; align-items:center; justify-content:center; background:var(--canvas); border:1px solid var(--hairline); border-radius:9999px; font-size:28px; font-weight:600; letter-spacing:-0.28px; font-variant-numeric:tabular-nums; line-height:1; }
+  .timebox:focus-within { outline:2px solid var(--focus); outline-offset:1px; }
+  .timebox input[type=time] { position:absolute; inset:0; width:100%; height:100%; opacity:0; border:0; background:transparent; font-size:16px; cursor:pointer; }
   .walks { display:flex; flex-wrap:wrap; gap:12px 18px; margin-top:24px; }
   .walks label { display:flex; align-items:center; gap:8px; font-size:14px; letter-spacing:-0.224px; color:var(--muted); white-space:nowrap; }
   .walks input { width:56px; height:34px; padding:0 8px; font-size:15px; text-align:center; letter-spacing:0; }
@@ -87,7 +90,7 @@
   <div class="inner">
     <div class="card setup">
       <div class="field-label">도착 마감시각 (학교 도착)</div>
-      <input type="time" id="deadline">
+      <div class="timebox"><span id="deadlineText">--</span><input type="time" id="deadline"></div>
       <div class="walks">
         <label>집→정류장 걷는 시간 <input type="number" id="walk" min="0" value="8" inputmode="numeric"> 분</label>
         <label>정류장→학교 걷는 시간 <input type="number" id="walk2" min="0" value="10" inputmode="numeric"> 분</label>
@@ -179,9 +182,17 @@ function getDeadline() {
 }
 
 // ---------- 렌더링 ----------
+// 마감시각 칸에 "오후 4:30" 형태로 표시
+function showDeadline() {
+  const v = $('deadline').value;
+  if (!v) { $('deadlineText').textContent = '--'; return; }
+  const [h, m] = v.split(':').map(Number);
+  $('deadlineText').textContent = (h < 12 ? '오전 ' : '오후 ') + (h % 12 || 12) + ':' + pad(m);
+}
+
 function renderClock() {
   $('clock').textContent = new Date().toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
-  if (auto) { const v = fmt(autoDeadline()); if ($('deadline').value !== v) { $('deadline').value = v; renderResult(); } }
+  if (auto) { const v = fmt(autoDeadline()); if ($('deadline').value !== v) { $('deadline').value = v; showDeadline(); renderResult(); } }
 }
 
 function renderResult() {
@@ -228,7 +239,7 @@ function renderTable() {
 function renderAll() { renderTable(); renderResult(); }
 
 // ---------- 이벤트 ----------
-$('deadline').addEventListener('input', () => { auto = false; renderResult(); });
+$('deadline').addEventListener('input', () => { auto = false; showDeadline(); renderResult(); });
 $('walk2').oninput = () => { localStorage.setItem('walk2', $('walk2').value); renderResult(); };
 $('walk').oninput = () => { localStorage.setItem('walk', $('walk').value); renderAll(); };
 $('refresh').onclick = load;
@@ -238,6 +249,7 @@ setInterval(() => { renderClock(); renderResult(); }, 1000);
 setInterval(() => { if (!document.hidden) load(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 $('deadline').value = fmt(autoDeadline());
+showDeadline();
 renderClock();
 load();
 </script>
