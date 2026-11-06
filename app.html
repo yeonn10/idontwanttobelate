@@ -51,6 +51,7 @@
   .result .big small { font-size:16px; font-weight:400; letter-spacing:-0.374px; color:var(--muted); margin-left:8px; white-space:nowrap; }
   .result.go .big small { color:var(--primary); font-weight:600; }
   .result .sub { font-size:15px; line-height:1.47; letter-spacing:-0.224px; color:var(--muted); }
+  .result .note { font-size:13px; margin-top:8px; }
   .result .flow b { color:var(--ink); font-weight:600; }
 
   /* 상세 정보 */
@@ -234,11 +235,13 @@ function renderResult() {
   const b = cands[cands.length - 1];
   const left = Math.floor((b.leaveAt - Date.now()) / 60000);
   const go = left <= 0;
+  const est = b.source === 'estimated'; // 배차간격으로 추정한 버스인지
   box.className = 'result' + (go ? ' go' : '');
   box.innerHTML = `
     <div class="head">마지노선 집 출발</div>
-    <div class="big">${fmtK(b.leaveAt)}<small>${go ? '(지금 출발)' : '(' + left + '분 뒤)'}</small></div>
-    <div class="sub flow"><b>${fmt(b.busAt)}</b> 탑승 → <b>${fmt(b.arriveAt)}</b> 정류장 도착 → <b>${fmt(b.arriveAt + walk2)}</b> 학교 도착${b.source === 'estimated' ? ' · 배차간격 추정' : ''}</div>`;
+    <div class="big">${fmtK(b.leaveAt)}<small>${go ? '(지금 출발)' : '(' + left + '분 뒤)'}${est ? ' (추정)' : ''}</small></div>
+    <div class="sub flow"><b>${fmt(b.busAt)}</b> 탑승 → <b>${fmt(b.arriveAt)}</b> 정류장 도착 → <b>${fmt(b.arriveAt + walk2)}</b> 학교 도착</div>
+    ${est ? `<div class="sub note">아직 버스 위치 정보에 잡히지 않은 버스예요. 배차간격(약 ${data.term || '?'}분)으로 계산한 예상 시각이라 실제와 다를 수 있어요.</div>` : ''}`;
 }
 
 function renderTable() {
