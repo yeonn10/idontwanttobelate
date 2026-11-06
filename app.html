@@ -66,8 +66,8 @@
   td { padding:14px 4px; border-top:1px solid var(--hairline); font-variant-numeric:tabular-nums; vertical-align:top; }
   td.t { font-size:20px; font-weight:400; letter-spacing:-0.374px; }
   td.t:first-child { font-weight:600; } /* 집 출발만 굵게 */
-  td.t .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--primary); margin-left:6px; vertical-align:middle; position:relative; top:-1px; }
   td.t .sub { font-size:12px; font-weight:400; letter-spacing:-0.12px; margin-top:2px; }
+  td.t .sub b { font-weight:700; color:var(--ink); } /* 공식예측 버스의 'N분 뒤' */
   .sub { color:var(--muted); font-size:13px; letter-spacing:-0.224px; line-height:1.4; }
   tr.pick td { background:color-mix(in srgb, var(--primary) 8%, transparent); }
   #ride { margin-top:10px; font-size:14px; letter-spacing:-0.224px; }
@@ -253,14 +253,15 @@ function renderTable() {
   const rows = list(null).filter((b) => b.leaveAt > Date.now() - 60000);
   $('rows').innerHTML = rows.map((b) => {
     const min = Math.max(0, Math.round((b.busAt - Date.now()) / 60000));
-    const info = b.source === 'estimated' ? `${min}분 뒤 · 추정` : `${min}분 뒤` + (b.stopsAway != null ? ` · ${b.stopsAway}정거장 전` : '');
+    const minTxt = b.source === 'official' ? `<b>${min}분 뒤</b>` : `${min}분 뒤`;
+    const info = b.source === 'estimated' ? `${minTxt} · 추정` : minTxt + (b.stopsAway != null ? ` · ${b.stopsAway}정거장 전` : '');
     return `<tr data-bus="${b.busAt}">
       <td class="t">${fmt(b.leaveAt)}</td>
-      <td class="t">${fmt(b.busAt)}${b.source === 'official' ? '<span class="dot"></span>' : ''}<div class="sub">${info}</div></td>
+      <td class="t">${fmt(b.busAt)}<div class="sub">${info}</div></td>
       <td class="t">${fmt(b.arriveAt)}</td></tr>`;
   }).join('');
   $('ride').innerHTML = rows.length ? `현재 교통상황 기준 반포역 → 중앙대 약 <b>${Math.round(rows[0].rideMin)}분</b>` : '';
-  if (data) $('meta').textContent = `갱신 ${fmt(data.now)} · ● 공식 예측`;
+  if (data) $('meta').textContent = `갱신 ${fmt(data.now)} · 굵은 글씨 = 공식 예측`;
   markPick();
 }
 
